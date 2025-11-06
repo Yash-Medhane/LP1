@@ -1,0 +1,17 @@
+FOLLOW VIDEO LINK; HAVE EVERYTHING IN C DRIVE
+
+
+SHOW-RUN COMMANDS> C/C++ EDIT CONFIG: INCLUDE PATH OF BIN (MINGW)
+
+Type Developer Command Prompt in the search bar.
+
+You should see an app named "Developer Command Prompt for VS <version>". Click on it to open it.
+
+This new window will look similar to a standard command prompt, but it will have a specific prompt like C:\Program Files (x86)\Microsoft Visual Studio\<version>\...\>. This indicates that the environment is correctly configured.
+
+Now, in this new window, navigate to your desktop:cd %USERPROFILE%\Desktop\MPI
+cl.exe add.c /I"C:/Program Files (x86)/Microsoft SDKs/MPI/Include" /link /LIBPATH:"C:/Program Files (x86)/Microsoft SDKs/MPI/Lib/x86" msmpi.lib
+Final Step: Run the Program
+Now that you have the add.exe executable, you can run it using the mpiexec command. This command is the MPI process launcher that will start your program on multiple processes.
+
+Run the following command in the same C:\Users\HP-PC\Desktop\MPI> command prompt:mpiexec -n 2 add.exe

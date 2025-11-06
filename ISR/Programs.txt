@@ -1,0 +1,310 @@
+Conflation : 
+
+```python
+import re
+from collections import Counter
+```
+
+
+```python
+def display_file(path):
+    with open(path, 'r') as f:
+        print(f.read())
+```
+
+
+```python
+def clean_text(path):
+    stop_words = {"the", "is", "and", "of", "are", "for", "in"}
+    result = []
+
+    with open(path, 'r') as f:
+        for line in f:
+            for word in line.split():
+                word = re.sub(r'[^a-zA-Z]', '', word)
+                if word.lower() not in stop_words and word:
+                    result.append(word)
+
+    print("After removing punctuation & stopwords:\n")
+    print(" ".join(result))
+    return result
+```
+
+
+```python
+def suffix_strip(words):
+    suffixes = ["ing", "ed", "ly", "ness", "ment", "ful", "es", "ies", "ier"]
+    stripped = []
+
+    for word in words:
+        for s in suffixes:
+            if word.endswith(s):
+                word = word[:-len(s)]
+                break
+        stripped.append(word)
+
+    print("\nAfter suffix stripping:\n")
+    print(" ".join(stripped))
+    return stripped
+```
+
+
+```python
+def word_freq(words):
+    count = Counter([w.lower() for w in words])
+    print("Word frequencies:\n")
+    for w, c in count.items():
+        print(f"{w}: {c}")
+```
+
+
+```python
+path = "Input.txt"
+
+display_file(path)
+cleaned = clean_text(path)
+stripped = suffix_strip(cleaned)
+word_freq(stripped)
+```
+---------------------------------------------------------------------------------------------------------------------
+Single Pass Clustering 
+
+```python
+def sim(v1, v2):
+    dot = sum(a*b for a, b in zip(v1, v2))
+    mag1 = sum(a*a for a in v1) ** 0.5
+    mag2 = sum(b*b for b in v2) ** 0.5
+    return dot / (mag1 * mag2) if mag1 and mag2 else 0
+```
+
+
+```python
+docs = [
+    [1, 2, 0, 0],   # D1
+    [1, 1, 0, 0],   # D2  -> similar to D1
+    [0, 0, 5, 4],   # D3
+    [0, 0, 4, 5]    # D4  -> similar to D3
+]
+```
+
+
+```python
+threshold = 0.8
+clusters = [[0]]
+centroids = [docs[0]]
+
+for i in range(1, len(docs)):
+    sims = [sim(docs[i], c) for c in centroids]
+    max_sim = max(sims)
+    j = sims.index(max_sim)
+
+    if max_sim >= threshold:
+        clusters[j].append(i)
+    else:
+        clusters.append([i])
+        centroids.append(docs[i])
+```
+
+
+```python
+print("\nFinal Clusters:")
+for i, c in enumerate(clusters, 1):
+    print(f"C{i}: ", [f"D{d+1}" for d in c])
+```
+
+    
+    Final Clusters:
+    C1:  ['D1', 'D2']
+    C2:  ['D3', 'D4']
+    
+
+
+```python
+-------------------------------------------------------------------------------------------------------------
+Inverted Index
+
+```python
+import os, time
+from whoosh.fields import Schema, TEXT, ID
+from whoosh.index import create_in
+from whoosh.qparser import QueryParser, AndGroup, OrGroup
+```
+
+
+```python
+# ---------- Step 1: Schema & index ----------
+schema = Schema(title=ID(stored=True), content=TEXT)
+index_dir = f"indexdir_{int(time.time())}"
+os.mkdir(index_dir)
+ix = create_in(index_dir, schema)
+```
+
+
+```python
+# ---------- Step 2: Add documents ----------
+writer = ix.writer()
+writer.add_document(title="doc1.txt", content=open("doc1.txt").read())
+writer.add_document(title="doc2.txt", content=open("doc2.txt").read())
+writer.commit()
+print("Documents indexed successfully!\n")
+```
+
+    Documents indexed successfully!
+    
+    
+
+
+```python
+# ---------- Step 3: Search function ----------
+def search_docs(query_str, use_or=False):
+    with ix.searcher() as searcher:
+        group = OrGroup.factory(0.9) if use_or else AndGroup
+        qp = QueryParser("content", ix.schema, group=group)
+        query = qp.parse(query_str)
+        results = searcher.search(query)
+
+        print(f"Results for query: '{query_str}'")
+        if results:
+            for r in results:
+                print("-", r["title"])
+        else:
+            print("No matching documents found.")
+        print()
+```
+
+
+```python
+# ---------- Step 4: Run Boolean search ----------
+search_docs("python AND web")       # AND query
+search_docs("python OR web", True)  # OR query
+```
+------------------------------------------------------------------------------------------------------
+Evaluation 
+
+```python
+# Query: "python data"
+retrieved = ["doc1.txt", "doc2.txt", "doc3.txt"]  # system's ranked output
+relevant = ["doc1.txt", "doc2.txt"]               # ground truth
+```
+
+
+```python
+import math
+
+# True Positives, False Positives, False Negatives
+tp = len([d for d in retrieved if d in relevant])
+fp = len([d for d in retrieved if d not in relevant])
+fn = len([d for d in relevant if d not in retrieved])
+
+# Precision, Recall
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+
+# F1 and E-Measure
+f1 = 2 * precision * recall / (precision + recall)
+e_measure = 1 - f1  # complement (simplified)
+```
+
+
+```python
+# NDCG Calculation
+relevance_scores = [1 if d in relevant else 0 for d in retrieved]
+
+def dcg(scores):
+    return sum(s / math.log2(i + 2) for i, s in enumerate(scores))
+
+ideal = sorted(relevance_scores, reverse=True)
+ndcg = dcg(relevance_scores) / dcg(ideal) if dcg(ideal) != 0 else 0
+
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+print(f"F1-Measure: {f1:.2f}")
+print(f"E-Measure: {e_measure:.2f}")
+print(f"NDCG: {ndcg:.2f}")
+---------------------------------------------------------------------------------------------------
+Weather & Web Scrapper
+
+```python
+import requests
+
+city = input("Enter city name: ")
+
+api_key = "bcb62df34de91d9f9387459111df3d4c"  # replace with your own key
+url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+response = requests.get(url)
+data = response.json()
+```
+
+    Enter city name:  nashik
+    
+
+
+```python
+if response.status_code == 200:
+    print("City:", data["name"])
+    print("Temperature:", data["main"]["temp"], "°C")
+    print("Wind Speed:", data["wind"]["speed"], "m/s")
+    print("Description:", data["weather"][0]["description"])
+else:
+    print("City not found or API error!")
+
+```
+
+    City: Nashik
+    Temperature: 25.41 °C
+    Wind Speed: 4.37 m/s
+    Description: broken clouds
+    
+
+
+```python
+from bs4 import BeautifulSoup
+import requests
+
+url = "https://books.toscrape.com/"   # safe sample e-commerce site
+page = requests.get(url)
+soup = BeautifulSoup(page.text, "html.parser")
+```
+
+
+```python
+products = soup.find_all("article", class_="product_pod")
+
+for product in products:
+    name = product.h3.a["title"]
+    price = product.find("p", class_="price_color").text
+    link = "https://books.toscrape.com/" + product.h3.a["href"]
+    print(f"Name: {name}\nPrice: {price}\nLink: {link}\n")
+
+```
+-----------------------------------------------------------------------------------------
+
+Input.txt
+
+The quick brown fox is jumping over the lazy dogs.
+Dogs are friendly and playful animals.
+The foxes were running swiftly in the forest.
+Happiness comes from helping others and being kind.
+Learning coding and reading books are fulfilling activities.
+
+-------------------------------------------------------------------------------------------
+
+Doc1.txt
+
+Python is a powerful programming language.
+It is widely used in web development and data analysis.
+
+------------------------------------------------------------------------------------------
+
+Doc2.txt
+
+Learning Python improves problem solving and logical thinking.
+Data analysis with Python is efficient and fun.
+
+-----------------------------------------------------------------------------------------
+
+Doc3.txt
+
+Machine learning models improve data-driven decisions.
+
+-----------------------------------------------------------------------------------------
