@@ -1,0 +1,210 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class RingElection {
+    vector<int> processes;
+    int leader;
+public:
+    RingElection(int n) {
+        for (int i = 0; i < n; i++) processes.push_back(i);
+        leader = -1;
+    }
+
+    void start() {
+        cout << "Token passing:\n";
+        for (int i = 0; i < processes.size(); i++)
+            cout << "Process " << (i + 1) % processes.size() << " has the token\n";
+
+        leader = *max_element(processes.begin(), processes.end());
+        cout << "Leader elected: " << leader << endl;
+    }
+};
+
+int main() {
+    RingElection ring(5);
+    ring.start();
+}
+---------------------------------------------------------------------------------
+🧠 Explanation
+
+Header inclusion:
+Includes all standard C++ libraries needed for input/output, vectors, and algorithms.
+
+Class definition:
+Defines a RingElection class to simulate the ring election process.
+
+Data members:
+processes → stores all process IDs.
+leader → stores the ID of the elected leader.
+
+Constructor:
+Initializes the list of processes from 0 to n−1.
+Sets leader to -1 initially (no leader chosen).
+
+Start function:
+Displays token passing between processes in a circular manner.
+Finds the process with the highest ID (that process becomes the leader).
+Prints which process is elected as the leader.
+
+Main function:
+Creates an object of RingElection with 5 processes.
+Starts the election process by calling start().
+
+Output summary:
+Shows the sequence of token passing.
+Declares the process with the highest ID as the leader.
+
+Concept:
+This simulates the Ring Leader Election Algorithm, where all processes are connected in a circle, and the one with the highest ID becomes the leader.
+----------------------------------------------------------------------------------------------------
+
+#include <bits/stdc++.h>
+#include <thread>
+using namespace std;
+
+class Bully {
+    vector<int> p;
+    int leader;
+public:
+    Bully(int n) {
+        for (int i = 0; i < n; i++) p.push_back(i);
+        leader = -1;
+    }
+
+    void start() {
+        cout << "Starting Bully Algorithm...\n";
+        leader = *max_element(p.begin(), p.end());
+        cout << "Leader elected: " << leader << "\n";
+
+        for (int id : p)
+            if (id != leader)
+                cout << "Process " << id << " acknowledges " << leader << " as leader\n";
+    }
+};
+
+int main() {
+    Bully b(5);
+    b.start();
+}
+
+------------------------------------------------------------------------------------------
+🧠 Explanation
+
+Header inclusion:
+Includes all necessary libraries — standard utilities (bits/stdc++.h) and threading (thread), though the thread library isn’t actually used here.
+
+Class name:
+The class Bully represents the Bully Leader Election Algorithm.
+
+Data members:
+p → a list (vector) of process IDs.
+leader → stores the process ID that becomes the leader.
+
+Constructor:
+Fills the list p with IDs from 0 to n−1.
+Initializes leader to -1 (no leader yet).
+
+start() function:
+Displays that the Bully Algorithm has started.
+Finds the highest process ID and makes it the leader (since in Bully algorithm, the highest ID always wins).
+Displays messages showing that all other processes acknowledge this leader.
+
+main() function:
+Creates an object of Bully class with 5 processes.
+Calls the start() function to run the election.
+
+Output summary:
+Prints the elected leader (highest ID).
+Shows how each remaining process accepts that leader.
+
+Concept:
+In the Bully Algorithm, if a process fails, the process with the next highest ID takes over.
+-----------------------------------------------------------------------------------------
+
+#include <iostream>
+#include <vector>
+#include <numeric>  // for accumulate()
+#include <cstdlib>  // for rand()
+#include <ctime>    // for time()
+using namespace std;
+
+int main() {
+    int numProcesses = 5;
+    int coordinator = 0;
+    vector<int> processTimes(numProcesses);
+
+    // Step 1: Assign random local times to all processes
+    srand(time(0));
+    cout << "Initial clock times of processes:\n";
+    for (int i = 0; i < numProcesses; i++) {
+        processTimes[i] = rand() % 100; // Random time between 0–99
+        cout << "Process " << i << " -> Time: " << processTimes[i] << endl;
+    }
+
+    // Step 2: Coordinator collects all times
+    cout << "\nCoordinator (Process " << coordinator << ") collects all times.\n";
+
+    // Step 3: Calculate average time
+    int total = accumulate(processTimes.begin(), processTimes.end(), 0);
+    int average = total / numProcesses;
+
+    cout << "\nAverage (synchronized) time calculated by coordinator: " << average << endl;
+
+    // Step 4: Coordinator sends average time to all processes
+    cout << "\nCoordinator sends synchronized time to all processes.\n";
+
+    // Step 5: Each process adjusts its clock
+    for (int i = 0; i < numProcesses; i++) {
+        cout << "Process " << i << " adjusts its clock from "
+             << processTimes[i] << " -> " << average << endl;
+        processTimes[i] = average;
+    }
+
+    // Step 6: Display final synchronized times
+    cout << "\nFinal clock times after synchronization:\n";
+    for (int i = 0; i < numProcesses; i++) {
+        cout << "Process " << i << " -> Time: " << processTimes[i] << endl;
+    }
+
+    return 0;
+}
+
+--------------------------------------------------------------------------------------------------------------
+
+🧠 Explanation
+
+Header inclusion:
+<iostream> → for input/output.
+<vector> → for storing process times.
+<numeric> → provides the accumulate() function to calculate total time.
+<cstdlib> and <ctime> → for generating random numbers.
+
+Variable initialization:
+numProcesses → number of processes in the system (5).
+coordinator → the process that acts as the time manager (process 0 here).
+processTimes → vector to store each process’s local clock time.
+
+Assign random times:
+Each process gets a random clock time between 0–99.
+These simulate unsynchronized local times.
+
+Coordinator collects times:
+The coordinator gathers all clock times from every process.
+
+Average time calculation:
+The coordinator computes the average of all clock times.
+This average represents the synchronized global time.
+
+Coordinator sends synchronized time:
+The coordinator broadcasts the calculated average time to all processes.
+
+Processes adjust clocks:
+Each process updates its local clock to the new average time.
+This makes all clocks synchronized.
+
+Final output:
+The program displays the final synchronized times of all processes.
+
+Concept summary:
+Demonstrates Clock Synchronization using the Average Method.
+Ensures all processes share the same clock time by averaging their local times.

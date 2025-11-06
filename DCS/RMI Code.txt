@@ -1,0 +1,104 @@
+RMI (Remote Method Invocation)
+It allows a Java program (client) to call methods on another Java program (server) that is running on a different computer or JVM.
+
+Concept:
+
+The server provides a remote method (sayHello).
+The client calls that method using RMI.
+
+1. Hello.java (Interface)
+import java.rmi.*;
+
+public interface Hello extends Remote {
+    String sayHello(String name) throws RemoteException;
+}
+
+Explanation:
+
+extends Remote – Marks this interface for RMI use.
+sayHello() – The method to be called remotely.
+throws RemoteException – Required for handling network issues.
+This file defines the contract (available remote methods).
+
+2. HelloImpl.java (Implementation Class)
+import java.rmi.*;
+import java.rmi.server.*;
+
+public class HelloImpl extends UnicastRemoteObject implements Hello {
+    HelloImpl() throws RemoteException {}
+    public String sayHello(String name) {
+        return "Hello " + name + "!";
+    }
+}
+
+Explanation:
+
+extends UnicastRemoteObject – Makes the class accessible remotely.
+Implements Hello – Provides the actual logic.
+sayHello() – Returns a greeting using the client’s input.
+This file contains the server-side implementation.
+
+3. Server.java
+import java.rmi.*;
+import java.rmi.registry.*;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            HelloImpl obj = new HelloImpl();  
+            LocateRegistry.createRegistry(2000);  
+            Naming.rebind("rmi://localhost:2000/HelloService", obj);  
+            System.out.println("Server ready... waiting for client request...");
+        } catch (Exception e) {
+            System.out.println("Server error: " + e);
+        }
+    }
+}
+
+Explanation:
+
+Starts RMI registry on port 2000.
+Registers (rebinds) the HelloService object.
+Waits for client connections.
+This file hosts the remote object.
+
+4. Client.java
+import java.rmi.*;
+import java.util.*;
+
+public class Client {
+    public static void main(String[] args) {
+        try {
+            Scanner sc = new Scanner(System.in);
+            System.out.print("Enter your name: ");
+            String name = sc.nextLine();
+
+            Hello stub = (Hello) Naming.lookup("rmi://localhost:2000/HelloService");
+            System.out.println(stub.sayHello(name));
+        } catch (Exception e) {
+            System.out.println("Client error: " + e);
+        }
+    }
+}
+
+Explanation:
+
+Takes user input (name).
+Connects to the server using Naming.lookup().
+Calls the remote sayHello() method.
+Displays the returned message.
+This file acts as the client that calls the remote method.
+
+Program Flow
+
+Start the server – registers the remote object on port 2000.
+Start the client – connects to the remote object.
+The client sends the name; the server processes it and returns a greeting.
+The client prints the received message.
+
+Command 
+
+javac *.java
+start rmiregistry (optional)
+java Server
+java Client

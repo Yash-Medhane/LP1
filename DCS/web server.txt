@@ -1,0 +1,84 @@
+🖥️ server.java
+import java.io.*;
+import java.net.*;
+
+public class server {
+    public static void main(String[] args) throws IOException {
+        ServerSocket server = new ServerSocket(5000);
+        System.out.println("Server started... Waiting for client...");
+
+        Socket socket = server.accept();
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        String msg = in.readLine();     // e.g. "5 10"
+        String[] parts = msg.split(" ");
+        int a = Integer.parseInt(parts[0]);
+        int b = Integer.parseInt(parts[1]);
+        out.println("Sum is: " + (a + b));
+
+        socket.close();
+        server.close();
+    }
+}
+
+💻 client.java
+import java.io.*;
+import java.net.*;
+
+public class client {
+    public static void main(String[] args) throws IOException {
+        Socket socket = new Socket("localhost", 5000);
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader user = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.print("Enter first number: ");
+        String num1 = user.readLine();
+        System.out.print("Enter second number: ");
+        String num2 = user.readLine();
+
+        out.println(num1 + " " + num2);   // send both numbers
+        System.out.println("Server says: " + in.readLine());
+
+        socket.close();
+    }
+}
+
+🧠 Explanation
+⚙️ Server side
+
+ServerSocket server = new ServerSocket(5000);
+→ Opens a server on port 5000.
+
+server.accept();
+→ Waits until a client connects.
+
+BufferedReader & PrintWriter
+→ Used for reading and writing text messages.
+
+in.readLine()
+→ Reads numbers sent by the client as a single line.
+
+split(" ") and parseInt()
+→ Separates and converts the numbers from string to integer.
+
+out.println("Sum is: " + (a + b));
+→ Sends the sum result back to client.
+
+💻 Client side
+
+Socket socket = new Socket("localhost", 5000);
+→ Connects to the server on same machine at port 5000.
+
+BufferedReader user
+→ Reads user input from keyboard.
+
+out.println(num1 + " " + num2);
+→ Sends both numbers to the server in one line.
+
+in.readLine()
+→ Receives and prints the server’s response.
+
+socket.close();
+→ Closes connection after communication.
