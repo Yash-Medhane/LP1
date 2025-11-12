@@ -106,29 +106,61 @@ for i, c in enumerate(clusters, 1):
 -------------------------------------------------------------------------------------------------------------
 Inverted Index
 
-import string, os
-folder = "inverted"
-index = {}
-
-for file in os.listdir(folder):
-    if file.endswith(".txt"):
-        text = open(os.path.join(folder,file), encoding="utf-8").read().lower()
-        for p in string.punctuation:
-            text = text.replace(p," ")
-        for word in set(text.split(" ")):
-            index.setdefault(word, []).append(file)
+```python
+import os, time
+from whoosh.fields import Schema, TEXT, ID
+from whoosh.index import create_in
+from whoosh.qparser import QueryParser, AndGroup, OrGroup
+```
 
 
-print("Indexing Successfull !")
-for term,docs in list(index.items())[:10]:
-    print(f"{term}:{docs}")
+```python
+# ---------- Step 1: Schema & index ----------
+schema = Schema(title=ID(stored=True), content=TEXT)
+index_dir = f"indexdir_{int(time.time())}"
+os.mkdir(index_dir)
+ix = create_in(index_dir, schema)
+```
+
+
+```python
+# ---------- Step 2: Add documents ----------
+writer = ix.writer()
+writer.add_document(title="doc1.txt", content=open("doc1.txt").read())
+writer.add_document(title="doc2.txt", content=open("doc2.txt").read())
+writer.commit()
+print("Documents indexed successfully!\n")
+```
+
+    Documents indexed successfully!
     
     
-query = input("Enter query to search : ").lower().strip()
 
 
-print("Response : ",index.get(query,"Document not found !"))
+```python
+# ---------- Step 3: Search function ----------
+def search_docs(query_str, use_or=False):
+    with ix.searcher() as searcher:
+        group = OrGroup.factory(0.9) if use_or else AndGroup
+        qp = QueryParser("content", ix.schema, group=group)
+        query = qp.parse(query_str)
+        results = searcher.search(query)
 
+        print(f"Results for query: '{query_str}'")
+        if results:
+            for r in results:
+                print("-", r["title"])
+        else:
+            print("No matching documents found.")
+        print()
+```
+
+
+```python
+# ---------- Step 4: Run Boolean search ----------
+search_docs("python AND web")       # AND query
+search_docs("python OR web", True)  # OR query
+```
 ------------------------------------------------------------------------------------------------------
 Evaluation 
 
@@ -173,7 +205,7 @@ print(f"F1-Measure: {f1:.2f}")
 print(f"E-Measure: {e_measure:.2f}")
 print(f"NDCG: {ndcg:.2f}")
 ---------------------------------------------------------------------------------------------------
-Weather
+Weather & Web Scrapper
 
 import requests
 
